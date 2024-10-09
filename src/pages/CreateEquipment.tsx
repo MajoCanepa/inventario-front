@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
-import {  Button, Form, Container, Card } from 'react-bootstrap';
+import { Button, Form, Container, Card, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 interface Equipment {
@@ -11,9 +11,8 @@ interface Equipment {
   acquisitionDate: string;
 }
 
-const CreataEquipment: React.FC = () => {
+const CreateEquipment: React.FC = () => {
   const navigate = useNavigate();
-
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [newEquipment, setNewEquipment] = useState({
     name: '',
@@ -21,6 +20,7 @@ const CreataEquipment: React.FC = () => {
     status: '',
     acquisitionDate: '',
   });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEquipments = async () => {
@@ -31,38 +31,38 @@ const CreataEquipment: React.FC = () => {
         const response = await api.get('/api/equipment', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
         setEquipments(response.data);
       } catch (error) {
         console.error({ message: 'Failed to fetch equipments', error });
-        
       }
     };
     fetchEquipments();
   }, []);
 
   const handleAddEquipment = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-  
-      try {
-        const response = await api.post('/api/equipment', newEquipment, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const addedEquipment = response.data;
-        setEquipments([...equipments, addedEquipment]);
-        setNewEquipment({ name: '', location: '', status: '', acquisitionDate: '' });
-        navigate('/equipment')
-      } catch (error) {
-        console.error({ message: 'Failed to add equipment', error });
-      }
-    };
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const response = await api.post('/api/equipment', newEquipment, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const addedEquipment = response.data;
+      setEquipments([...equipments, addedEquipment]);
+      setNewEquipment({ name: '', location: '', status: '', acquisitionDate: '' });
+      navigate('/equipment');
+    } catch (error) {
+      setError('No tienes permiso para realizar esta acción');
+      console.error({ message: 'Failed to add equipment', error });
+    }
+  };
 
   return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
       <Card className='shadow' style={{ width: '100%', maxWidth: '600px', padding: '20px', borderRadius: '10px' }}>
         <Card.Body>
           <h2 className="my-4 text-center">Crear Equipo</h2>
+          {error && <Alert variant="danger">{error}</Alert>}
           <Form>
             <Form.Group controlId="formEquipmentName">
               <Form.Label>Nombre</Form.Label>
@@ -110,4 +110,4 @@ const CreataEquipment: React.FC = () => {
   );
 };
 
-export default CreataEquipment;
+export default CreateEquipment;
